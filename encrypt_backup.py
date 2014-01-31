@@ -185,6 +185,8 @@ def run(cmd):
     ret_val = p.wait()
     stdout = p.stdout.read().decode('utf-8')
     stderr = p.stderr.read().decode('utf-8')
+    p.stdout.close()
+    p.stderr.close()
     if (ret_val != 0):
         sys.stderr.write('Error with command:%s\nstdout:%s\nstderr:%s\n' % (cmd, stdout, stderr))
         sys.exit(ret_val)
