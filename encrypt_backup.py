@@ -195,4 +195,5 @@ def debug(input_str):
     if debug_mode:
         print(input_str)
 
-main()
+if __name__ == '__main__':
+    main()
