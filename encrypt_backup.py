@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# FIXME !!!!!!!!!!!!!!!!
+# what about moved files ???
+
 ''' This program copies over a directory recursively to another folder and 
 encrypts the contents (in the target folder). Most of the meat of this program
 is copying and encrypting changed content and removing folders which become
@@ -19,7 +22,7 @@ import sys
 CONFIG_FILE = 'encrypt_backup.conf'
 VALID_CONFIG_VARIABLES = {'base_folder', 'target_folder', 'file_extension', 'password', 'debug_mode'}
 MANDITORY_CONFIG_VARIABLE = {'base_folder', 'target_folder', 'password'}
-debug_mode = False
+debug_mode = True
 
 def first_run_todo(base_folder, target_folder):
     ''' Do some things that need to be once when the program is run for 
@@ -48,9 +51,11 @@ def main():
     # normalize path names (ie remove a extra '/' at end if present)
     for i in ('base_folder', 'target_folder'):
         config_values[i] = os.path.normpath(config_values[i])
-
+    
     # delete or encrypt (new or changed) files in the target dir
     files = get_files_to_process()
+
+
     if (len(files['to_add']) == 0) and len(files['to_delete']) == 0:
        debug('nothing new to encrypt and copy. exiting...') 
        sys.exit(0)
@@ -104,21 +109,23 @@ def add_encrypted_files(files_to_add, config_values):
 
     # Example of working gpg command
     # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --output secert3.txt.gpg --symmetric secert.txt
-
+    '''
     command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{temp_out_file}} --symmetric {{in_file}} > {{out_file}}".format(config_values['password'])
+    '''
+    command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{out_file}} --symmetric {{in_file}}".format(config_values['password'])
     
     for file in files_to_add:
 
         # make the parent folder if it isn't there
         out_file = config_values['target_folder'] + os.path.sep + file + config_values['file_extension']
         out_folder = os.path.dirname(out_file)
-        os.makedirs(out_folder)
+        os.makedirs(out_folder, exist_ok = True)
 
-        temp_out_file = config_values['base_folder'] + os.path.sep + file + config_values['file_extension']
+        #temp_out_file = config_values['base_folder'] + os.path.sep + file + config_values['file_extension']
 
         in_file =  config_values['base_folder'] + os.path.sep + file
 
-        run(command_to_encrypt.format(temp_out_file = temp_out_file, in_file = in_file, out_file = out_file))
+        run(command_to_encrypt.format(in_file = in_file, out_file = out_file))
 
 
 def delete_files(files_to_delete):
@@ -154,25 +161,27 @@ def delete_folders(folders_dict, base_folder):
 def get_files_to_process():
     ''' Get all files that have new, deleted, or changed '''
 
-    # git status --porcelain
+    # git status --porcelain -uall
     # ex output:
     # M tmp2/file.txt
     # D to_removed.txt
     # ?? bla.txt
     return_val = {'to_add': [], 'to_delete':[]}
-    output = run('git status --porcelain')['stdout']
+    output = run('git status --porcelain -uall')['stdout']
+    print('git output:{}'.format(output))
     add_or_modified_regex = re.compile(r'(?:M|\?\?)\s+(.+)$')
     deleted_regex = re.compile(r'(?:D)\s+(.+)$')
-    for line in output:
+    for line in output.split('\n'):
         line = line.strip()
+        debug('line:{}'.format(line))
         match_obj = add_or_modified_regex.match(line)
         if match_obj:
-            return_val['to_add'].append(match.group(1))
+            return_val['to_add'].append(match_obj.group(1))
             continue
         match_obj = deleted_regex.match(line)
         if match_obj:
-            return_val['to_delete'].append(match.group(1))
-    debug
+            return_val['to_delete'].append(match_obj.group(1))
+    debug('files_to_process:{}'.format(return_val))
     return return_val
         
                 
