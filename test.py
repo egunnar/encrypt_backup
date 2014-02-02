@@ -6,10 +6,10 @@ import shutil
 import sys
 
 TMP_TESTING_DIR = None
-PASSWORD = 'testing123' 
+PASSWORD = 'testing123'
 DEBUG_MODE = True
 ENCRYPTED_FILE_EXT = '.gpg'
- 
+
 class MyTest(unittest.TestCase):
 
     def setUp(self):
@@ -25,22 +25,22 @@ class MyTest(unittest.TestCase):
         config_dict = {
             'base_folder': base_folder,
             'target_folder': target_folder
-            
+
         }
         debug('removing folders for clean start to testAllBasic function')
         rm_dir_tree(base_folder)
         rm_dir_tree(target_folder)
         debug('done removing folders for clean start to testAllBasic function')
-       
+
         file1_base = base_folder + '/xxx/file1.txt'
-        file1_target = target_folder + '/xxx/file1.txt' + ENCRYPTED_FILE_EXT 
+        file1_target = target_folder + '/xxx/file1.txt' + ENCRYPTED_FILE_EXT
         file1_contents = 'this is file 1.'
         create_or_modify_file(file1_base, file1_contents)
 
         self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
-        
+
         self.assertTrue(
-            is_encrypt_as(file1_target, file1_contents), 
+            is_encrypt_as(file1_target, file1_contents),
             'First file is encrypted in target directory')
 
         # add a new file
@@ -51,10 +51,10 @@ class MyTest(unittest.TestCase):
 
         self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
         self.assertTrue(
-            is_encrypt_as(file1_target, file1_contents), 
+            is_encrypt_as(file1_target, file1_contents),
             'First file still is encrypted in target directory')
         self.assertTrue(
-            is_encrypt_as(file2_target, file2_contents), 
+            is_encrypt_as(file2_target, file2_contents),
             '2nd file is encrypted in target directory')
 
         # modify file
@@ -101,7 +101,7 @@ def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True
         rm_dir_tree(config_dict['base_folder'])
     if clean_target:
         rm_dir_tree(config_dict['target_folder'])
-   
+
     config_file_name = TMP_TESTING_DIR + '/test_config_file.conf'
     config_file = open(config_file_name, 'w')
     for key, value in config_dict.items():
@@ -110,7 +110,7 @@ def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True
     cmd = 'python3 encrypt_backup.py {}'.format(config_file_name)
 
     return run_program(cmd)
-        
+
 def run_program(cmd):
     debug('\trunning:' + cmd)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -144,12 +144,12 @@ def create_or_modify_file(file_name, contents):
 def is_encrypt_as(file_name, contents):
 
     # sends the result to stdout
-    # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --decrypt secert3.txt.gpg 
+    # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --decrypt secert3.txt.gpg
     result = run_program("echo '{}' | gpg --batch --passphrase-fd 0 --decrypt {}".format(PASSWORD, file_name))
     return result['stdout'] == contents
 
 def rm_dir_tree(path):
-    print('attempting to remove:' + path)
+    debug('attempting to remove:' + path)
     if os.path.exists(path):
         # shutil.rmtree(path, onerror = on_rm_error )
         run_program('rm -rf {}'.format(path))

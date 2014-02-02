@@ -3,7 +3,7 @@
 # FIXME !!!!!!!!!!!!!!!!
 # what about moved files ???
 
-''' This program copies over a directory recursively to another folder and 
+''' This program copies over a directory recursively to another folder and
 encrypts the contents (in the target folder). Most of the meat of this program
 is copying and encrypting changed content and removing folders which become
 empty. The program requires git and gpg to call from the command line.
@@ -22,24 +22,24 @@ import sys
 CONFIG_FILE = 'encrypt_backup.conf'
 VALID_CONFIG_VARIABLES = {'base_folder', 'target_folder', 'file_extension', 'password', 'debug_mode'}
 MANDITORY_CONFIG_VARIABLE = {'base_folder', 'target_folder', 'password'}
-debug_mode = True
+DEBUG_MODE = True
 
 def first_run_todo(base_folder, target_folder):
-    ''' Do some things that need to be once when the program is run for 
+    ''' Do some things that need to be once when the program is run for
     the first time or when certain config file setttings change.'''
 
     for dir in (base_folder, target_folder):
         os.makedirs(dir, exist_ok = True)
 
-    # If there is no git repo create one 
+    # If there is no git repo create one
     os.chdir(base_folder)
     if not(os.path.exists('.git')):
         run('git init')
-    
+
 def main():
 
     if len(sys.argv) != 2:
-        sys.stderr.write('Usage:encrypt_backup.py <config_file>\n') 
+        sys.stderr.write('Usage:encrypt_backup.py <config_file>\n')
         sys.exit(1)
 
     config_file_name = sys.argv[1]
@@ -51,13 +51,13 @@ def main():
     # normalize path names (ie remove a extra '/' at end if present)
     for i in ('base_folder', 'target_folder'):
         config_values[i] = os.path.normpath(config_values[i])
-    
+
     # delete or encrypt (new or changed) files in the target dir
     files = get_files_to_process()
 
 
     if (len(files['to_add']) == 0) and len(files['to_delete']) == 0:
-       debug('nothing new to encrypt and copy. exiting...') 
+       debug('nothing new to encrypt and copy. exiting...')
        sys.exit(0)
     debug('files to process:{}'.format(files))
     os.chdir(config_values['target_folder'])
@@ -74,7 +74,7 @@ def main():
 def process_config_file(config_file_name):
     ''' Parse the main configuration file and process it'''
 
-    global debug_mode
+    global DEBUG_MODE
 
     config_values = {}
     with open(config_file_name, 'r') as fh:
@@ -99,8 +99,8 @@ def process_config_file(config_file_name):
         config_values['file_extension'] = ''
     if ('debug_mode' in config_values) and \
         (config_values['debug_mode'].lower() in ('t', 'true', '1')):
-        debug_mode = True
-    
+        DEBUG_MODE = True
+
     return config_values
 
 def add_encrypted_files(files_to_add, config_values):
@@ -112,7 +112,7 @@ def add_encrypted_files(files_to_add, config_values):
     command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{temp_out_file}} --symmetric {{in_file}} > {{out_file}}".format(config_values['password'])
     '''
     command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{out_file}} --symmetric {{in_file}}".format(config_values['password'])
-    
+
     for file in files_to_add:
 
         # make the parent folder if it isn't there
@@ -133,8 +133,8 @@ def add_encrypted_files(files_to_add, config_values):
 
 
 def delete_files(files_to_delete):
-    ''' Delete all the files and folders from the target dir that are no 
-    longer around. Note the 99% of the work is deleting folders that just 
+    ''' Delete all the files and folders from the target dir that are no
+    longer around. Note the 99% of the work is deleting folders that just
     became empty.'''
 
     potential_folders_to_delete = {}
@@ -147,14 +147,14 @@ def delete_files(files_to_delete):
         for dir in path_parts:
             if dir not in last_dir:
                 last_dir[dir] = {}
-            last_dir = last_dir[dir] 
+            last_dir = last_dir[dir]
     delete_folders(potential_folders_to_delete, '')
 
 def delete_folders(folders_dict, base_folder):
     for dir in folders_dict:
         delete_folders(folders_dict[dir])
         try:
-            folder_to_delete = base_folder + os.path.sep + dir 
+            folder_to_delete = base_folder + os.path.sep + dir
             # FIXME
             #os.remove(folder_to_delete)
             debug('removing folder:{}'.format(folder_to_delete))
@@ -171,7 +171,7 @@ def get_files_to_process():
     # ?? bla.txt
     return_val = {'to_add': [], 'to_delete':[]}
     output = run('git status --porcelain -uall')['stdout']
-    print('git output:{}'.format(output))
+    debug('git output:{}'.format(output))
     add_or_modified_regex = re.compile(r'(?:M|\?\?)\s+(.+)$')
     deleted_regex = re.compile(r'(?:D)\s+(.+)$')
     for line in output.split('\n'):
@@ -186,8 +186,8 @@ def get_files_to_process():
             return_val['to_delete'].append(match_obj.group(1))
     debug('files_to_process:{}'.format(return_val))
     return return_val
-        
-                
+
+
 def run(cmd):
     ''' Run a command line program, gather it's output, and throw a exception
     if the program failed.'''
@@ -205,9 +205,9 @@ def run(cmd):
     return {'stdout':stdout, 'stderr':stderr}
 
 def debug(input_str):
-    global debug_mode
-    if debug_mode:
-        print(input_str)
+    global DEBUG_MODE
+    if DEBUG_MODE:
+        sys.stderr.write(input_str + '\n')
 
 if __name__ == '__main__':
     main()
