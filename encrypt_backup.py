@@ -68,8 +68,7 @@ def main():
     os.chdir(config_values['base_folder'])
     for file in (files['to_add'] + files['to_delete']):
         run('git add {}'.format(file))
-    # FIXME
-    #run("git commit -a -m 'commit from encrypt backup program'")
+    run("git commit -a -m 'commit from encrypt backup program'")
 
 
 def process_config_file(config_file_name):
@@ -135,9 +134,8 @@ def delete_files(files_to_delete):
 
     potential_folders_to_delete = {}
     for file in files_to_delete:
-        # FIXME 
-        #os.remove(file)
         debug('removing file:{}'.format(file))
+        os.remove(file)
 
         path_parts = file.split(os.path.sep)[:-1]
         last_dir = potential_folders_to_delete

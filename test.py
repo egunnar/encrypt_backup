@@ -5,9 +5,8 @@ import subprocess
 import shutil
 import sys
 
-#cwd = os.getcwd()
-cwd = '/home/egartz/tmp/test/encrypt_backup'
-password = 'testing123' 
+TMP_TESTING_DIR = None
+PASSWORD = 'testing123' 
 DEBUG_MODE = True
 ENCRYPTED_FILE_EXT = '.gpg'
  
@@ -21,8 +20,8 @@ class MyTest(unittest.TestCase):
 
     def testAllBasic(self):
         ''' Test adding a file, removing 1, and updating 1'''
-        base_folder = cwd + '/testing/testallbasic/base'
-        target_folder = cwd + '/testing/testallbasic/target'
+        base_folder = TMP_TESTING_DIR + '/testing/testallbasic/base'
+        target_folder = TMP_TESTING_DIR + '/testing/testallbasic/target'
         config_dict = {
             'base_folder': base_folder,
             'target_folder': target_folder
@@ -33,11 +32,6 @@ class MyTest(unittest.TestCase):
         rm_dir_tree(target_folder)
         debug('done removing folders for clean start to testAllBasic function')
        
-        # FIXME 
-        # sys.exit(1)
-
-        # run the program with 1 new file
-
         file1_base = base_folder + '/xxx/file1.txt'
         file1_target = target_folder + '/xxx/file1.txt' + ENCRYPTED_FILE_EXT 
         file1_contents = 'this is file 1.'
@@ -45,11 +39,6 @@ class MyTest(unittest.TestCase):
 
         self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
         
-        # FIXME
-        #debug('base_folder:' + base_folder + '\n' + 'target_folder:' + target_folder)
-        #sys.exit(1)
-
-
         self.assertTrue(
             is_encrypt_as(file1_target, file1_contents), 
             'First file is encrypted in target directory')
@@ -72,8 +61,8 @@ class MyTest(unittest.TestCase):
         ''' Test with nothing to do (2 runs).'''
 
         config_dict = {
-            'base_folder': cwd + '/testing/testFirstRun/base/tmp',
-            'target_folder': cwd + '/testing/testFirstRun/target/tmp'
+            'base_folder': TMP_TESTING_DIR + '/testing/testFirstRun/base/tmp',
+            'target_folder': TMP_TESTING_DIR + '/testing/testFirstRun/target/tmp'
         }
         result = run_encrypt_back_program(config_dict)
         self.assertEqual(result['ret_val'], 0, 'first empty run ok')
@@ -94,23 +83,19 @@ def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True
             raise Exception("don't call with function without config_dict['{}']".format(manditory_param))
     config_dict.setdefault('file_extension', ENCRYPTED_FILE_EXT)
     config_dict.setdefault('debug_mode', 'true')
-    config_dict.setdefault('password', password)
+    config_dict.setdefault('password', PASSWORD)
 
     if clean_base:
         rm_dir_tree(config_dict['base_folder'])
     if clean_target:
         rm_dir_tree(config_dict['target_folder'])
    
-    config_file_name = cwd + '/test_config_file.conf'
+    config_file_name = TMP_TESTING_DIR + '/test_config_file.conf'
     config_file = open(config_file_name, 'w')
     for key, value in config_dict.items():
         config_file.write('{}={}\n'.format(key, value))
     config_file.close()
     cmd = 'python3 encrypt_backup.py {}'.format(config_file_name)
-
-    # FIXME
-    debug('running:' + cmd)
-    #sys.exit(1)
 
     return run_program(cmd)
         
@@ -148,13 +133,13 @@ def is_encrypt_as(file_name, contents):
 
     # sends the result to stdout
     # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --decrypt secert3.txt.gpg 
-    result = run_program("echo '{}' | gpg --batch --passphrase-fd 0 --decrypt {}".format(password, file_name))
+    result = run_program("echo '{}' | gpg --batch --passphrase-fd 0 --decrypt {}".format(PASSWORD, file_name))
     return result['stdout'] == contents
 
 def rm_dir_tree(path):
     print('attempting to remove:' + path)
     if os.path.exists(path):
-        #shutil.rmtree(path, onerror = on_rm_error )
+        # shutil.rmtree(path, onerror = on_rm_error )
         run_program('rm -rf {}'.format(path))
 
 
@@ -170,4 +155,15 @@ def debug(debug_str):
         sys.stderr.write(debug_str + '\n')
 
 if __name__ == '__main__':
+
+    if len(sys.argv) == 1:
+        TMP_TESTING_DIR = os.getcwd()
+    elif len(sys.argv) == 2:
+        TMP_TESTING_DIR = sys.argv[1]
+    else:
+        sys.stderr.write('Usage: one optional argument that is temp working directory for this program\n')
+        sys.exit(1)
+    # command line args will screw up the unittest module
+    del sys.argv[1:]
+
     unittest.main()
