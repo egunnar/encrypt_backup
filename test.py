@@ -57,6 +57,18 @@ class MyTest(unittest.TestCase):
             is_encrypt_as(file2_target, file2_contents), 
             '2nd file is encrypted in target directory')
 
+        # modify file
+        file1_contents = 'new file1 contents here!'
+        create_or_modify_file(file1_base, file1_contents)
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.assertTrue(
+            is_encrypt_as(file1_target, file1_contents),
+            'First file has changed contents')
+        self.assertTrue(
+            is_encrypt_as(file2_target, file2_contents),
+            '2nd file is encrypted in target directory just like before')
+
+
     def testFirstRun(self):
         ''' Test with nothing to do (2 runs).'''
 

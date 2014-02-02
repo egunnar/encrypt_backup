@@ -122,6 +122,11 @@ def add_encrypted_files(files_to_add, config_values):
 
         #temp_out_file = config_values['base_folder'] + os.path.sep + file + config_values['file_extension']
 
+        # gpg won't overwrite a file. in the an older version of the file
+        # exists remove it first
+        if os.path.exists(out_file):
+            os.unlink(out_file)
+
         in_file =  config_values['base_folder'] + os.path.sep + file
 
         run(command_to_encrypt.format(in_file = in_file, out_file = out_file))
