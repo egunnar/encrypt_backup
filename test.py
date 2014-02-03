@@ -68,6 +68,15 @@ class MyTest(unittest.TestCase):
             is_encrypt_as(file2_target, file2_contents),
             '2nd file is encrypted in target directory just like before')
 
+        # remove file
+        print('REMOVING:{}'.format(file2_base))
+        os.unlink(file2_base)
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.assertTrue(
+            is_encrypt_as(file1_target, file1_contents),
+            'First file is still there with expected contents.')
+        self.assertFalse(os.path.exists(file2_target),
+            'File 2 is removed.')
 
     def testFirstRun(self):
         ''' Test with nothing to do (2 runs).'''
