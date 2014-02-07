@@ -6,6 +6,7 @@ import shutil
 import sys
 
 TMP_TESTING_DIR = None
+TMP_TESTING_SUB_DIR = None
 PASSWORD = 'testing123'
 DEBUG_MODE = True
 ENCRYPTED_FILE_EXT = '.gpg'
@@ -13,24 +14,20 @@ ENCRYPTED_FILE_EXT = '.gpg'
 class MyTest(unittest.TestCase):
 
     def setUp(self):
-        pass
+        rm_dir_tree(TMP_TESTING_SUB_DIR)
 
     def tearDown(self):
         pass
 
     def testAllBasic(self):
         ''' Test adding a file, removing 1, and updating 1'''
-        base_folder = TMP_TESTING_DIR + '/testing/testallbasic/base'
-        target_folder = TMP_TESTING_DIR + '/testing/testallbasic/target'
+        base_folder = TMP_TESTING_SUB_DIR + '/testallbasic/base'
+        target_folder = TMP_TESTING_SUB_DIR + '/testallbasic/target'
         config_dict = {
             'base_folder': base_folder,
             'target_folder': target_folder
 
         }
-        debug('removing folders for clean start to testAllBasic function')
-        rm_dir_tree(base_folder)
-        rm_dir_tree(target_folder)
-        debug('done removing folders for clean start to testAllBasic function')
 
         file1_base = base_folder + '/xxx/file1.txt'
         file1_target = target_folder + '/xxx/file1.txt' + ENCRYPTED_FILE_EXT
@@ -82,8 +79,8 @@ class MyTest(unittest.TestCase):
         ''' Test with nothing to do (2 runs).'''
 
         config_dict = {
-            'base_folder': TMP_TESTING_DIR + '/testing/testFirstRun/base/tmp',
-            'target_folder': TMP_TESTING_DIR + '/testing/testFirstRun/target/tmp'
+            'base_folder': TMP_TESTING_SUB_DIR + '/testFirstRun/base/tmp',
+            'target_folder': TMP_TESTING_SUB_DIR + '/testFirstRun/target/tmp'
         }
         result = run_encrypt_back_program(config_dict)
         self.assertEqual(result['ret_val'], 0, 'first empty run ok')
@@ -185,6 +182,7 @@ if __name__ == '__main__':
         sys.stderr.write('Usage: one optional argument that is temp working directory for this program\n')
         sys.exit(1)
     # command line args will screw up the unittest module
+    TMP_TESTING_SUB_DIR = TMP_TESTING_DIR + '/testing'
     del sys.argv[1:]
 
     unittest.main()
