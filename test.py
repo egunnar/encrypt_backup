@@ -19,6 +19,44 @@ class MyTest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def testCleanUpFolder(self):
+        ''' Test that empty folders (after a file is deleted) are deleted'''
+        base_folder = TMP_TESTING_SUB_DIR + '/testCleanUpFolder/base'
+        target_folder = TMP_TESTING_SUB_DIR + '/testCleanUpFolder/target'
+        config_dict = {
+            'base_folder': base_folder,
+            'target_folder': target_folder
+
+        }
+        file1_full_base_directory = base_folder + '/aaa/bbb/ccc/ddd'
+        file1_base = file1_full_base_directory + '/file1.txt'
+        file1_full_target_directory = target_folder + '/aaa/bbb/ccc/ddd'
+        file1_target = file1_full_target_directory + '/file1.txt' + ENCRYPTED_FILE_EXT
+        file_contents = 'bla bla'
+        create_or_modify_file(file1_base, file_contents)
+
+
+        file2_full_base_directory = base_folder + '/aaa/bbb/alt'
+        file2_base = file2_full_base_directory + '/file2.txt'
+        file2_full_target_directory = target_folder + '/aaa/bbb/alt'
+        file2_target = file2_full_target_directory + '/file2.txt' + ENCRYPTED_FILE_EXT
+        file_contents = 'bla bla'
+        create_or_modify_file(file2_base, file_contents)
+
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+
+        # sanity test
+        self.assertTrue(os.path.exists(file1_full_target_directory), "The first file's path ({}) exists.".format(file1_full_target_directory))
+        self.assertTrue(os.path.exists(file2_full_target_directory), "The seconds file's path ({}) exists.".format(file2_full_target_directory))
+
+        os.unlink(file1_base)
+
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        deleted_folder = target_folder + '/aaa/bbb/ccc'
+
+        self.assertFalse(os.path.exists(deleted_folder), '{} is gone'.format(deleted_folder))
+        self.assertTrue(os.path.exists(file2_target), '{} file is still there.'.format(file2_target))
+
     def testMovedFile(self):
         ''' Test moving a file '''
         base_folder = TMP_TESTING_SUB_DIR + '/testMovedFile/base'

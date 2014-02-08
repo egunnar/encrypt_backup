@@ -1,10 +1,5 @@
 #!/usr/bin/python3
 
-# FIXME !!!!!!!!!!!!!!!!
-# TODO what about moved files ???
-# TODO test remove intermediate folders after delete
-
-
 ''' This program copies over a directory recursively to another folder and
 encrypts the contents (in the target folder). Most of the meat of this program
 is copying and encrypting changed content and removing folders which become
@@ -57,14 +52,12 @@ def main():
     # delete or encrypt (new or changed) files in the target dir
     files = get_files_to_process()
 
-
     if (len(files['to_add']) == 0) and len(files['to_delete']) == 0:
        debug('nothing new to encrypt and copy. exiting...')
        sys.exit(0)
     debug('files to process:{}'.format(files))
-    os.chdir(config_values['target_folder'])
-    delete_files(files['to_delete'], config_values['file_extension'])
-    add_encrypted_files(files['to_add'], config_values)
+    delete_files(config_values['target_folder'], files['to_delete'], config_values['file_extension'])
+    add_encrypted_files(config_values['target_folder'], files['to_add'], config_values)
 
     # do a git commit only now that all the changes are encrypted
     os.chdir(config_values['base_folder'])
@@ -106,8 +99,10 @@ def process_config_file(config_file_name):
 
     return config_values
 
-def add_encrypted_files(files_to_add, config_values):
+def add_encrypted_files(target_folder, files_to_add, config_values):
     ''' Encrypted and copy over the files to the target dir '''
+
+    os.chdir(target_folder)
 
     # Example of working gpg command
     # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --output secert3.txt.gpg --symmetric secert.txt
@@ -135,35 +130,31 @@ def add_encrypted_files(files_to_add, config_values):
         run(command_to_encrypt.format(in_file = in_file, out_file = out_file))
 
 
-def delete_files(files_to_delete, file_extension):
+def delete_files(target_folder, files_to_delete, file_extension):
     ''' Delete all the files and folders from the target dir that are no
     longer around. Note the 99% of the work is deleting folders that just
     became empty.'''
 
-    potential_folders_to_delete = {}
+    os.chdir(target_folder)
+    all_folders_to_delete = []
     for file in files_to_delete:
         file += file_extension
-        debug('removing file:{}'.format(file))
         os.remove(file)
 
-        path_parts = file.split(os.path.sep)[:-1]
-        last_dir = potential_folders_to_delete
-        for dir in path_parts:
-            if dir not in last_dir:
-                last_dir[dir] = {}
-            last_dir = last_dir[dir]
-    delete_folders(potential_folders_to_delete, '')
+        all_folders_to_delete.append(file.split(os.path.sep)[:-1])
+    debug('all_folders_to_delete:{}'.format(all_folders_to_delete))
+    delete_folders(target_folder, all_folders_to_delete)
 
-def delete_folders(folders_dict, base_folder):
-    for dir in folders_dict:
-        delete_folders(folders_dict[dir], base_folder)
-        try:
-            folder_to_delete = base_folder + os.path.sep + dir
-            # FIXME
-            #os.remove(folder_to_delete)
-            debug('removing folder:{}'.format(folder_to_delete))
-        except OSError:
-            pass
+def delete_folders(target_folder, all_folders_to_delete):
+    for long_path in all_folders_to_delete:
+        folder_len = len(long_path)
+        for i in range(folder_len):
+
+            folder_to_delete = target_folder + '/' + '/'.join(long_path[:folder_len - i])
+            try:
+                os.rmdir(folder_to_delete)
+            except OSError:
+                break
 
 def get_files_to_process():
     ''' Get all files that have new, deleted, or changed '''
