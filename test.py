@@ -43,7 +43,7 @@ class MyTest(unittest.TestCase):
         file_contents = 'bla bla'
         create_or_modify_file(file2_base, file_contents)
 
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
 
         # sanity test
         self.assertTrue(os.path.exists(file1_full_target_directory), "The first file's path ({}) exists.".format(file1_full_target_directory))
@@ -51,7 +51,7 @@ class MyTest(unittest.TestCase):
 
         os.unlink(file1_base)
 
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
         deleted_folder = target_folder + '/aaa/bbb/ccc'
 
         self.assertFalse(os.path.exists(deleted_folder), '{} is gone'.format(deleted_folder))
@@ -72,12 +72,12 @@ class MyTest(unittest.TestCase):
         file1_contents = 'this is file 1.'
         create_or_modify_file(file1_base, file1_contents)
 
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
 
         new_file1_base = base_folder + '/xxx/new_file1.txt'
         new_file1_target = target_folder + '/xxx/new_file1.txt' + ENCRYPTED_FILE_EXT
         os.rename(file1_base, new_file1_base)
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
 
         self.assertTrue(os.path.exists(new_file1_target), 'The new file exists in the new location')
         self.assertFalse(os.path.exists(file1_target), 'The new file exists does not exist in the old location')
@@ -97,7 +97,7 @@ class MyTest(unittest.TestCase):
         file1_contents = 'this is file 1.'
         create_or_modify_file(file1_base, file1_contents)
 
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
 
         self.assertTrue(
             is_encrypt_as(file1_target, file1_contents),
@@ -109,7 +109,7 @@ class MyTest(unittest.TestCase):
         file2_contents = 'this is file 2.'
         create_or_modify_file(file2_base, file2_contents)
 
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
         self.assertTrue(
             is_encrypt_as(file1_target, file1_contents),
             'First file still is encrypted in target directory')
@@ -120,7 +120,7 @@ class MyTest(unittest.TestCase):
         # modify file
         file1_contents = 'new file1 contents here!'
         create_or_modify_file(file1_base, file1_contents)
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
         self.assertTrue(
             is_encrypt_as(file1_target, file1_contents),
             'First file has changed contents')
@@ -131,7 +131,7 @@ class MyTest(unittest.TestCase):
         # remove file
         print('REMOVING:{}'.format(file2_base))
         os.unlink(file2_base)
-        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+        self.run_encrypt_backup_wo_error(config_dict)
         self.assertTrue(
             is_encrypt_as(file1_target, file1_contents),
             'First file is still there with expected contents.')
@@ -151,13 +151,13 @@ class MyTest(unittest.TestCase):
         result = run_encrypt_back_program(config_dict)
         self.assertEqual(result['ret_val'], 0, 'second empty run ok')
 
-    def run_encrypt_backup_wo_error(self, config_dict, **args):
-        result = run_encrypt_back_program(config_dict, **args)
+    def run_encrypt_backup_wo_error(self, config_dict):
+        result = run_encrypt_back_program(config_dict)
         if result['ret_val'] != 0:
             raise Exception('run failed and returned:{}'.format(result['ret_val']))
 
-def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True):
-    debug('in run_encrypt_back_program with clean_base={} and clean_target={}'.format(clean_base, clean_target))
+def run_encrypt_back_program(config_dict):
+    debug('in run_encrypt_back_program')
 
     for manditory_param in ('base_folder', 'target_folder'):
         if manditory_param not in config_dict:
@@ -165,11 +165,6 @@ def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True
     config_dict.setdefault('file_extension', ENCRYPTED_FILE_EXT)
     config_dict.setdefault('debug_mode', 'true')
     config_dict.setdefault('password', PASSWORD)
-
-    if clean_base:
-        rm_dir_tree(config_dict['base_folder'])
-    if clean_target:
-        rm_dir_tree(config_dict['target_folder'])
 
     config_file_name = TMP_TESTING_DIR + '/test_config_file.conf'
     config_file = open(config_file_name, 'w')
