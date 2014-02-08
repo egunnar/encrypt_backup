@@ -85,10 +85,11 @@ def process_config_file(config_file_name):
                 line = line.strip()
                 (orig_config_name, config_value) = line.split('=')
                 config_name = orig_config_name.lower().strip()
-                config_value = config_value.lower().strip()
+                config_value = config_value.strip()
                 if config_name not in VALID_CONFIG_VARIABLES:
                     raise Exception('In configuration file:{} config variable: {} is not recognized'.format(config_file_name, orig_config_name))
                 config_values[config_name] = config_value
+
 
     for mand_config_key in MANDITORY_CONFIG_VARIABLE:
         if mand_config_key not in config_values:
