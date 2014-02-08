@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 # FIXME !!!!!!!!!!!!!!!!
-# what about moved files ???
+# TODO what about moved files ???
+# TODO test remove intermediate folders after delete
+
 
 ''' This program copies over a directory recursively to another folder and
 encrypts the contents (in the target folder). Most of the meat of this program

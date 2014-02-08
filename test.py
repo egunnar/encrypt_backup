@@ -19,6 +19,31 @@ class MyTest(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def testMovedFile(self):
+        ''' Test moving a file '''
+        base_folder = TMP_TESTING_SUB_DIR + '/testMovedFile/base'
+        target_folder = TMP_TESTING_SUB_DIR + '/testMovedFile/target'
+        config_dict = {
+            'base_folder': base_folder,
+            'target_folder': target_folder
+
+        }
+
+        file1_base = base_folder + '/xxx/file1.txt'
+        file1_target = target_folder + '/xxx/file1.txt' + ENCRYPTED_FILE_EXT
+        file1_contents = 'this is file 1.'
+        create_or_modify_file(file1_base, file1_contents)
+
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+
+        new_file1_base = base_folder + '/xxx/new_file1.txt'
+        new_file1_target = target_folder + '/xxx/new_file1.txt' + ENCRYPTED_FILE_EXT
+        os.rename(file1_base, new_file1_base)
+        self.run_encrypt_backup_wo_error(config_dict, clean_target = False, clean_base = False)
+
+        self.assertTrue(os.path.exists(new_file1_target), 'The new file exists in the new location')
+        self.assertFalse(os.path.exists(file1_target), 'The new file exists does not exist in the old location')
+
     def testAllBasic(self):
         ''' Test adding a file, removing 1, and updating 1'''
         base_folder = TMP_TESTING_SUB_DIR + '/testallbasic/base'
