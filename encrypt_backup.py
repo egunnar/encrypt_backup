@@ -2,13 +2,18 @@
 
 ''' This program copies over a directory recursively to another folder and
 encrypts the contents (in the target folder). Most of the meat of this program
-is copying and encrypting changed content and removing folders which become
-empty. The program requires git and gpg to call from the command line.
-I created this program to be run by cron and to encrypt important files and
-move then into a folder to be picked up dropbox.
+is copying and encrypting changed content and removing folders that become
+empty.  I created this program to be run by cron and to encrypt important files
+and move then into a folder to be picked up dropbox.
 
 Note one mandatory argument is passed to the program. This is the file name
 of the configuration file.
+
+Requirement.
+- Only works on unix
+- The program requires git and gpg to call from the command line.
+- Won't work on python2.X. Was tested on python3.2 and need no extra python
+libraries.
 '''
 
 import os
@@ -19,7 +24,7 @@ import sys
 CONFIG_FILE = 'encrypt_backup.conf'
 VALID_CONFIG_VARIABLES = {'base_folder', 'target_folder', 'file_extension', 'password', 'debug_mode'}
 MANDITORY_CONFIG_VARIABLE = {'base_folder', 'target_folder', 'password'}
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 def first_run_todo(base_folder, target_folder):
     ''' Do some things that need to be once when the program is run for
@@ -74,16 +79,15 @@ def process_config_file(config_file_name):
     config_values = {}
     with open(config_file_name, 'r') as fh:
         for line in fh:
-            if not(line.startswith('#')):
-                if re.match(r'\s*$', line):
-                    continue
-                line = line.strip()
-                (orig_config_name, config_value) = line.split('=')
-                config_name = orig_config_name.lower().strip()
-                config_value = config_value.strip()
-                if config_name not in VALID_CONFIG_VARIABLES:
-                    raise Exception('In configuration file:{} config variable: {} is not recognized'.format(config_file_name, orig_config_name))
-                config_values[config_name] = config_value
+            if line.startswith('#') or re.match(r'\s*$', line):
+                continue
+            line = line.strip()
+            (orig_config_name, config_value) = line.split('=')
+            config_name = orig_config_name.lower().strip()
+            config_value = config_value.strip()
+            if config_name not in VALID_CONFIG_VARIABLES:
+                raise Exception('In configuration file:{} config variable: {} is not recognized'.format(config_file_name, orig_config_name))
+            config_values[config_name] = config_value
 
 
     for mand_config_key in MANDITORY_CONFIG_VARIABLE:
@@ -106,9 +110,6 @@ def add_encrypted_files(target_folder, files_to_add, config_values):
 
     # Example of working gpg command
     # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --output secert3.txt.gpg --symmetric secert.txt
-    '''
-    command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{temp_out_file}} --symmetric {{in_file}} > {{out_file}}".format(config_values['password'])
-    '''
     command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output {{out_file}} --symmetric {{in_file}}".format(config_values['password'])
 
     for file in files_to_add:
@@ -118,9 +119,7 @@ def add_encrypted_files(target_folder, files_to_add, config_values):
         out_folder = os.path.dirname(out_file)
         os.makedirs(out_folder, exist_ok = True)
 
-        #temp_out_file = config_values['base_folder'] + os.path.sep + file + config_values['file_extension']
-
-        # gpg won't overwrite a file. in the an older version of the file
+        # gpg won't overwrite a file. in an older version of the file
         # exists remove it first
         if os.path.exists(out_file):
             os.unlink(out_file)
@@ -146,6 +145,8 @@ def delete_files(target_folder, files_to_delete, file_extension):
     delete_folders(target_folder, all_folders_to_delete)
 
 def delete_folders(target_folder, all_folders_to_delete):
+    ''' Prune as much of the empty directories as I can'''
+
     for long_path in all_folders_to_delete:
         folder_len = len(long_path)
         for i in range(folder_len):
@@ -181,7 +182,6 @@ def get_files_to_process():
             return_val['to_delete'].append(match_obj.group(1))
     debug('files_to_process:{}'.format(return_val))
     return return_val
-
 
 def run(cmd):
     ''' Run a command line program, gather it's output, and throw a exception

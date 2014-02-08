@@ -8,7 +8,7 @@ import sys
 TMP_TESTING_DIR = None
 TMP_TESTING_SUB_DIR = None
 PASSWORD = 'testing123'
-DEBUG_MODE = True
+DEBUG_MODE = False
 ENCRYPTED_FILE_EXT = '.gpg'
 
 class MyTest(unittest.TestCase):
@@ -21,12 +21,12 @@ class MyTest(unittest.TestCase):
 
     def testCleanUpFolder(self):
         ''' Test that empty folders (after a file is deleted) are deleted'''
+
         base_folder = TMP_TESTING_SUB_DIR + '/testCleanUpFolder/base'
         target_folder = TMP_TESTING_SUB_DIR + '/testCleanUpFolder/target'
         config_dict = {
             'base_folder': base_folder,
             'target_folder': target_folder
-
         }
         file1_full_base_directory = base_folder + '/aaa/bbb/ccc/ddd'
         file1_base = file1_full_base_directory + '/file1.txt'
@@ -176,7 +176,7 @@ def run_encrypt_back_program(config_dict, clean_base = True, clean_target = True
     for key, value in config_dict.items():
         config_file.write('{}={}\n'.format(key, value))
     config_file.close()
-    cmd = 'python3 encrypt_backup.py {}'.format(config_file_name)
+    cmd = 'python encrypt_backup.py {}'.format(config_file_name)
 
     return run_program(cmd)
 
@@ -244,8 +244,8 @@ if __name__ == '__main__':
     else:
         sys.stderr.write('Usage: one optional argument that is temp working directory for this program\n')
         sys.exit(1)
-    # command line args will screw up the unittest module
     TMP_TESTING_SUB_DIR = TMP_TESTING_DIR + '/testing'
+    # command line args screw up the unittest module (yes, weird but true)
     del sys.argv[1:]
 
     unittest.main()
