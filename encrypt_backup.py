@@ -71,7 +71,7 @@ def main():
     # do a git commit only now that all the changes are encrypted
     os.chdir(config_values['base_folder'])
     for file in files['to_add'] + files['to_delete']:
-        run('git add {}'.format(file))
+        run("git add '{}'".format(file))
     run("git commit -a -m 'commit from encrypt backup program'")
 
 
@@ -119,7 +119,7 @@ def add_encrypted_files(target_folder, files_to_add, config_values):
     # echo 'sec3rt p@ssworD' | gpg --batch --passphrase-fd 0 --output \
     #   secert3.txt.gpg --symmetric secert.txt
     command_to_encrypt = "echo '{0}' | gpg --batch --passphrase-fd 0 --output \
-        {{out_file}} --symmetric {{in_file}}".format(config_values['password'])
+        '{{out_file}}' --symmetric '{{in_file}}'".format(config_values['password'])
 
     for file in files_to_add:
 
