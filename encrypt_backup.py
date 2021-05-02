@@ -186,11 +186,14 @@ def get_files_to_process():
         debug('line:{}'.format(line))
         match_obj = add_or_modified_regex.match(line)
         if match_obj:
+            if os.path.isdir(match_obj.group(1)):
+                continue
             return_val['to_add'].append(match_obj.group(1))
             continue
         match_obj = deleted_regex.match(line)
         if match_obj:
-            return_val['to_delete'].append(match_obj.group(1))
+            if not os.path.isdir(match_obj.group(1)):
+                return_val['to_delete'].append(match_obj.group(1))
     debug('files_to_process:{}'.format(return_val))
     return return_val
 
